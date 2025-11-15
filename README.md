@@ -22,6 +22,8 @@ I realised that much of what the old extension handled could be achieved with fa
 
 This script will work with Opera One (version 120.0.5543.61) but not with later versions, so you will need to disable auto-updates:
 
+https://blogs.opera.com/desktop/2025/07/opera-120-0-5543-61-stable-update/
+
 1. Locate the Opera helper or updater executable, typically at:  
    ```bash
    /Applications/Opera.app/Contents/MacOS/opera_autoupdate
