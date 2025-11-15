@@ -1,6 +1,6 @@
-WHAT DOES THIS SCRIPT DO ?
-This script works as a desktop plug-in to allow for a single mouse click (holding the Command key on macOS) to download a visible image.
-It will pair it with an exported XMP file, populating the following IPTC fields with relevant image data from the website:
+## **WHAT DOES THIS SCRIPT DO?**  
+This script works as a desktop plug-in that allows a single mouse click (while holding the Command key on macOS) to download a visible image from a webpage.
+It pairs the downloaded image with an exported XMP file, populating the following IPTC fields with relevant image data pulled from the website:
 
 | IPTC | data 
 |----------|----------|
@@ -9,17 +9,30 @@ It will pair it with an exported XMP file, populating the following IPTC fields 
 | Description  | any selected text |
 
 
-REQUIREMENTS:
-Opera One(version: 120.0.5543.61) (x86_64) 
-Chromium version:135.0.7049.115
-macOS (anything that will run the above browser version)
+## **REQUIREMENTS**
+- **Opera One** (version: 120.0.5543.61) (x86_64)  
+- **Chromium** version: 135.0.7049.115  
+- **macOS** (anything that will run the above browser version)
+
+## 
+
+This is a lightweight, streamlined version of the cross-platform extension I originally built for Firefox (back in version 3).
+
+I realised that much of what the old extension handled could be achieved with far less complexity (although some features were removed in the process). Even so, this script still performs roughly 80–90% of the original functionality.
+
+This script will work with Opera One (version 120.0.5543.61) but not with later versions, so you will need to disable auto-updates:
+
+1. Locate the Opera helper or updater executable, typically at:  
+   ```bash
+   /Applications/Opera.app/Contents/MacOS/opera_autoupdate
+
+2. Rename or move it:
+   ```bash
+   mv opera_autoupdate opera_autoupdate.bak
+
+3. Alternatively, remove its execution permission:
+   ```bash
+   chmod -x opera_autoupdate
 
 
-This is a light weight streamlined version of the cross platform extension I used to have for FireFox (way back in version 3).
-
-I found that much of what I had could actually be performed with a lot less complexity, although this meant some of the features were missing, but it still functioning about 80-90% of what it was.
-
-This scrip will work with Opera One(version: 120.0.5543.61) (x86_64) and not after. So you will have to stop the auto update.
-
- 
-Originally ExifTool was bundled with the extension to write to JPEG files so that the downloaded image could be searched for. But, as I use image management software I could like without that (one time) key feature as the image file and sidecar XMP metadata file would pair the data on import anyway.
+Originally, ExifTool was bundled with the extension to write metadata directly into JPEG files, allowing downloaded images to be searchable at the OS level (Windows/macOS/Linux). Since I now use image-management software, I can live without that former key feature, as the image file and its sidecar XMP metadata file are paired upon import.
