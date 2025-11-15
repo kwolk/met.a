@@ -1,0 +1,37 @@
+{
+  // Specifies Manifest V3, required for Chrome/Opera as of 2025
+  "manifest_version": 3,
+
+  // Extension name shown in the browser’s extension manager
+  "name": "Cmd Click Image Downloader",
+
+  // Description of the extension’s purpose
+  "description": "Download images (JPEG/WebP) with Cmd + click and export XMP sidecar",
+
+  // Version number for tracking updates
+  "version": "1.0",
+
+  // Permissions required for the extension’s functionality
+  "permissions": [
+    // Enables downloading images and XMP files to the user’s system
+    "downloads",
+    // Allows interaction with the active tab (e.g., getting URL, title, selection)
+    "activeTab"
+  ],
+
+  // Background script running as a service worker (Manifest V3)
+  "background": {
+    // Single JS file handling download logic
+    "service_worker": "background.js"
+  },
+
+  // Content scripts injected into webpages
+  "content_scripts": [
+    {
+      // Applies to all URLs, allowing the extension to work on any webpage
+      "matches": ["<all_urls>"],
+      // JS file that detects Cmd + click and collects image/data
+      "js": ["content.js"]
+    }
+  ]
+}
