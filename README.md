@@ -1,5 +1,6 @@
 ## **WHAT DOES THIS SCRIPT DO?**  
-This script works as a desktop plug-in that allows a single mouse click (while holding the Command key on macOS) to download a visible image from a webpage.
+This script is an extension for the Opera web browser that allows a single mouse click (while holding the Command key on macOS) to download a visible image from a webpage.
+If an image is not natively WebP then it will attempt to fetch the original JPEG/PNG file and download it, signifying that with a green border on the image, whilst colouring it red if its WebP.
 It pairs the downloaded image with an exported XMP file, populating the following IPTC fields with relevant image data pulled from the website:
 
 | IPTC | data 
