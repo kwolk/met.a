@@ -1,100 +1,78 @@
-document.addEventListener('click', (event) => {
-  const isCmdHeld = event.metaKey || event.ctrlKey;
-  const target = event.target;
+"use strict";
 
-  if (isCmdHeld && target.tagName.toLowerCase() === 'img') {
-    event.preventDefault();
+document.addEventListener("click", e => {
+    if (!e.metaKey && !e.ctrlKey) return;
+    if (e.target.tagName !== "IMG") return;
 
-    // Function to get the largest direct image URL
-    function getFullSizeUrl(url) {
-      const urlObj = new URL(url, window.location.href);
-      let baseUrl = urlObj.href;
-      urlObj.searchParams.delete('w');
-      urlObj.searchParams.delete('h');
-      urlObj.searchParams.delete('width');
-      urlObj.searchParams.delete('height');
-      urlObj.searchParams.delete('size');
-      urlObj.searchParams.delete('imwidth');
-      baseUrl = urlObj.href;
-      baseUrl = baseUrl.replace(/(_\d+x\d*|_small|_medium|_large|_thumbnail)/gi, '');
-      baseUrl = baseUrl.replace(/\/s\d+(-h)?\//gi, '/s0/');
-      return baseUrl;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    const img = e.target;
+    let url = img.currentSrc || img.src || "";
+    if (!url || url.startsWith("data:")) return;
+
+    // === Highest resolution detection (your battle-tested hacks) ===
+    if (img.srcset) {
+        const candidates = img.srcset.split(",").map(s => s.trim().split(/\s+/)[0]).filter(Boolean);
+        url = candidates[candidates.length - 1] || url;
     }
 
-    // Function to sanitize filename
-    function sanitizeFilename(name) {
-      return name
-        .replace(/[^a-z0-9_\-\s]/gi, '')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .substring(0, 100);
+    // Site-specific original URL fixes
+    if (url.includes("pbs.twimg.com") || url.includes("twitter.com")) {
+        url = url.replace(/:(\w+)(\?|$)/, ":orig$2");
+    } else if (url.includes("preview.redd.it")) {
+        url = url.replace(/preview\.redd\.it\/[^\/]+\/([^\/?]+)/, "i.redd.it/$1");
+    } else if (url.includes("scontent") && url.includes("instagram")) {
+        url = url.replace(/\/s\d+x\d+\//, "/") + (url.includes("?") ? "&" : "?") + "size=l";
+    } else if (url.includes("tumblr.com")) {
+        url = url.replace(/_(?:best|raw|\d+)\./, ".");
+    } else if (url.includes("pinterest")) {
+        url = url.replace(/\/\d+x(\d+)?\//g, "/originals/");
     }
 
-    // Function to check if URL looks like an image
-    function isImageUrl(url) {
-      return /\.(jpg|jpeg|png|gif|webp|bmp|svg|tiff|ico)$/i.test(url);
-    }
+    // Fallbacks
+    const dataUrl = img.dataset.src || img.dataset.original || img.dataset.full || img.dataset.highres;
+    if (dataUrl) url = dataUrl;
+    const link = img.closest("a")?.href;
+    if (link && !url.includes(link)) url = link;
 
-    let imageUrl = target.src;
-    let usedSource = 'src';
+    // === Collect metadata for XMP ===
+    const absoluteUrl = new URL(url, location.href).href;
+    const filename = decodeURIComponent(absoluteUrl.split("/").pop().split("?")[0]) || "image.jpg";
+    const pageUrl = location.href;
+    const pageTitle = document.title;
 
-    if (target.parentElement && target.parentElement.tagName.toLowerCase() === 'a') {
-      const linkUrl = target.parentElement.href;
-      if (linkUrl && isImageUrl(linkUrl)) {
-        imageUrl = linkUrl.replace(/\/s\d+(-h)?\//gi, '/s0/');
-        usedSource = 'href (adjusted)';
-      }
-    } else if (target.srcset) {
-      const srcsetEntries = target.srcset.split(',').map(entry => entry.trim().split(' '));
-      const largest = srcsetEntries.reduce((max, [url, size]) => {
-        const width = parseInt(size) || 0;
-        return width > (max.width || 0) ? { url, width } : max;
-      }, { url: imageUrl, width: 0 });
-      if (isImageUrl(largest.url)) {
-        imageUrl = largest.url;
-        usedSource = 'srcset';
-      }
-    } else if (target.dataset.src && isImageUrl(target.dataset.src)) {
-      imageUrl = target.dataset.src;
-      usedSource = 'data-src';
-    } else if (target.dataset.full && isImageUrl(target.dataset.full)) {
-      imageUrl = target.dataset.full;
-      usedSource = 'data-full';
-    }
-
-    const absoluteUrl = getFullSizeUrl(imageUrl);
-    console.log(`Resolved image URL (from ${usedSource}):`, absoluteUrl);
-
-    let extension = '.jpg';
-    const extMatch = absoluteUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg|tiff|ico)$/i);
-    if (extMatch) {
-      extension = extMatch[0].toLowerCase();
-    } else if (absoluteUrl.includes('webp')) {
-      extension = '.webp';
-    }
-
-    const pageTitle = document.title || 'image';
-    let filename = sanitizeFilename(pageTitle) + extension;
-    console.log("Generated filename:", filename);
-
-    target.style.border = '5px solid red';
-
-    const pageUrl = window.location.href;
     let selectedText = window.getSelection().toString().trim();
     if (selectedText) {
-      selectedText = selectedText.replace(/\b(https?:\/\/[^\s]+|www\.[^\s]+|[^\s]+\.(com|org|net|edu|gov|io|co\.[a-z]{2}))\b/gi, '[$1]');
-      selectedText += ` [${pageUrl}]`;
+        selectedText = selectedText.replace(/\b(https?:\/\/[^\s]+)/g, "[$1]");
+        selectedText += ` [${pageUrl}]`;
     } else {
-      selectedText = `[${pageUrl}]`;
+        selectedText = `[${pageUrl}]`;
     }
 
+    // Visual feedback
+    img.style.outline = "10px solid yellow";
+    img.style.outlineOffset = "-3px";
+
     chrome.runtime.sendMessage({
-      action: 'downloadImageAndExportXML',
-      imageUrl: absoluteUrl,
-      filename: filename,
-      pageUrl: pageUrl,
-      pageTitle: pageTitle,
-      selectedText: selectedText
+        downloadImage: {
+            url: absoluteUrl,
+            filename: filename,
+            pageUrl: pageUrl,
+            pageTitle: pageTitle,
+            selectedText: selectedText
+        }
+    }, response => {
+        clearTimeout(window.fallbackTimer);
+        const isBad = response?.isWebP || /\.(webp|avif)/i.test(absoluteUrl);
+        img.style.transition = "outline 0.4s ease";
+        img.style.outline = isBad ? "10px solid red" : "10px solid lime";
+        setTimeout(() => img.style.outline = "", 2500);
     });
-  }
-});
+
+    // Fallback green if no response
+    window.fallbackTimer = setTimeout(() => {
+        img.style.outline = "10px solid lime";
+        setTimeout(() => img.style.outline = "", 2500);
+    }, 1000);
+}, true);
