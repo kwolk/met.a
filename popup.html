@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: system-ui, sans-serif; padding: 12px; width: 220px; }
+        h3 { margin: 0 0 12px 0; }
+        label { display: block; margin: 8px 0; user-select: none; }
+        button { margin-top: 12px; padding: 6px 12px; }
+    </style>
+</head>
+<body>
+    <h3>Don't Accept WebP</h3>
+
+    <label><input type="checkbox" id="active"> Enable blocking</label>
+    <label><input type="checkbox" id="webp"> Block WebP</label>
+    <label><input type="checkbox" id="avif"> Block AVIF</label>
+
+    <button id="save">Save & Close</button>
+
+    <script src="popup.js"></script>
+</body>
+</html>
