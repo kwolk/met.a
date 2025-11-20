@@ -11,7 +11,7 @@ document.addEventListener("click", e => {
     let url = img.currentSrc || img.src || "";
     if (!url || url.startsWith("data:")) return;
 
-    // === Highest resolution detection (your battle-tested hacks) ===
+    // === Highest resolution detection (all your battle-tested hacks) ===
     if (img.srcset) {
         const candidates = img.srcset.split(",").map(s => s.trim().split(/\s+/)[0]).filter(Boolean);
         url = candidates[candidates.length - 1] || url;
@@ -30,27 +30,34 @@ document.addEventListener("click", e => {
         url = url.replace(/\/\d+x(\d+)?\//g, "/originals/");
     }
 
-    // Fallbacks
+    // Data attributes & parent link fallback
     const dataUrl = img.dataset.src || img.dataset.original || img.dataset.full || img.dataset.highres;
     if (dataUrl) url = dataUrl;
     const link = img.closest("a")?.href;
     if (link && !url.includes(link)) url = link;
 
-    // === Collect metadata for XMP ===
+    // === Build absolute URL & filename ===
     const absoluteUrl = new URL(url, location.href).href;
     const filename = decodeURIComponent(absoluteUrl.split("/").pop().split("?")[0]) || "image.jpg";
-    const pageUrl = location.href;
-    const pageTitle = document.title;
 
+    // === Smart description logic (THIS IS THE NEW PART) ===
     let selectedText = window.getSelection().toString().trim();
+
     if (selectedText) {
-        selectedText = selectedText.replace(/\b(https?:\/\/[^\s]+)/g, "[$1]");
-        selectedText += ` [${pageUrl}]`;
+        // User selected something → prioritize it, just wrap URLs and append page URL
+        selectedText = selectedText.replace(/\b(https?:\/\/[^\s\)]+)/g, "[$1]");
+        selectedText += ` [${location.href}]`;
     } else {
-        selectedText = `[${pageUrl}]`;
+        // Nothing selected → use alt text if meaningful, otherwise fall back to page URL
+        const alt = img.alt?.trim();
+        if (alt && alt !== "" && alt.toLowerCase() !== "image" && !/^(photo|picture|img|\d+)$/i.test(alt)) {
+            selectedText = alt + ` [${location.href}]`;
+        } else {
+            selectedText = `[${location.href}]`;
+        }
     }
 
-    // Visual feedback
+    // === Trigger download + XMP + visual feedback ===
     img.style.outline = "10px solid yellow";
     img.style.outlineOffset = "-3px";
 
@@ -58,8 +65,8 @@ document.addEventListener("click", e => {
         downloadImage: {
             url: absoluteUrl,
             filename: filename,
-            pageUrl: pageUrl,
-            pageTitle: pageTitle,
+            pageUrl: location.href,
+            pageTitle: document.title,
             selectedText: selectedText
         }
     }, response => {
@@ -70,7 +77,6 @@ document.addEventListener("click", e => {
         setTimeout(() => img.style.outline = "", 2500);
     });
 
-    // Fallback green if no response
     window.fallbackTimer = setTimeout(() => {
         img.style.outline = "10px solid lime";
         setTimeout(() => img.style.outline = "", 2500);
